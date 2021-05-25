@@ -97,6 +97,7 @@ func (bc *Blockchain) SetAddr(a string) {
 // txo.MkTXOLoc(...)
 func (bc *Blockchain) Add(b *block.Block) {
 	//var prevBlock *BlockchainNode = bc.LastBlock
+
 	return
 }
 
@@ -319,10 +320,46 @@ type UTXOInfo struct {
 // bc.Lock()
 // bc.Unlock()
 func (bc *Blockchain) GetUTXOForAmt(amt uint32, pubKey string) ([]*UTXOInfo, uint32, bool) {
-	var initUxto = bc.LastBlock.utxo
+	bc.Lock()
+	defer bc.Unlock()
 
+	var lastBlock = bc.LastBlock
 
-	return nil, 0, false
+	var current uint32 = 0
+	var currentInfo = make([]*UTXOInfo, 0)
+
+	var change uint32 = 0
+
+	isEnough := false
+
+	for key, element := range lastBlock.utxo {
+		hash, i := txo.PrsTXOLoc(key)
+		amount := element.Amount
+
+		if element.LockingScript == pubKey {
+			if !isEnough {
+				current += amount
+
+				if current >= amt {
+					isEnough = true
+					diff := current - amt
+
+					//Ask TA for OK
+					change += diff
+
+					out := UTXOInfo{hash, i, element, amount - diff}
+					currentInfo = append(currentInfo, &out)
+				} else {
+					out := UTXOInfo{hash, i, element, amount}
+					currentInfo = append(currentInfo, &out)
+				}
+			} else {
+				change += amount
+			}
+		}
+	}
+
+	return currentInfo, change, isEnough
 }
 
 // GenesisBlock creates the genesis block from
