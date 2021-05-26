@@ -124,5 +124,5 @@ func (tp *TxPool) Add(t *tx.Transaction) {
 // tp.mutex.Unlock()
 // tp.TxQ.Rmv(...)
 func (tp *TxPool) ChkTxs(remover []*tx.Transaction) {
-	return
+	return nil
 }
