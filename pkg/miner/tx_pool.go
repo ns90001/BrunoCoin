@@ -2,6 +2,7 @@ package miner
 
 import (
 	"BrunoCoin/pkg/block/tx"
+	"fmt"
 	"go.uber.org/atomic"
 	"sync"
 )
@@ -78,6 +79,20 @@ func (tp *TxPool) PriMet() bool {
 // let t be a transaction object
 // t.Sz()
 func CalcPri(t *tx.Transaction) uint32 {
+	if t != nil {
+		var fees = t.SumInputs() - t.SumOutputs()
+		var factor uint32 = 100
+		var sz = t.Sz()
+
+		var priority = fees * factor / sz
+
+		if priority == 0 {
+			return 1
+		}
+	} else {
+		fmt.Errorf("transaction is nil")
+	}
+
 	return 0
 }
 
@@ -103,7 +118,19 @@ func CalcPri(t *tx.Transaction) uint32 {
 // tp.mutex.Lock()
 // tp.mutex.Unlock()
 func (tp *TxPool) Add(t *tx.Transaction) {
-	return
+	tp.mutex.Unlock()
+	defer tp.mutex.Lock()
+
+	if tp.Length() < tp.Cap {
+		if t != nil {
+			var priority = CalcPri(t)
+			tp.CurPri.Add(priority)
+			tp.Ct.Add(1)
+			tp.TxQ.Add(priority, t)
+		} else {
+			fmt.Printf("ERROR {TxPool.Add}: transaction is nil")
+		}
+	}
 }
 
 
@@ -123,6 +150,21 @@ func (tp *TxPool) Add(t *tx.Transaction) {
 // tp.mutex.Lock()
 // tp.mutex.Unlock()
 // tp.TxQ.Rmv(...)
+
 func (tp *TxPool) ChkTxs(remover []*tx.Transaction) {
-	return nil
+	tp.mutex.Unlock()
+	defer tp.mutex.Lock()
+
+	for _, t := range remover {
+		if t != nil {
+			if tp.TxQ.Has(t) {
+				tp.TxQ.Rmv([]*tx.Transaction{t})
+				tp.Ct.Sub(-1)
+				tp.CurPri.Sub(CalcPri(t))
+			}
+		} else {
+			fmt.Printf("ERROR {TxPool.Add}: transaction is nil")
+		}
+	}
+
 }
