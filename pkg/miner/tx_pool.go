@@ -118,8 +118,8 @@ func CalcPri(t *tx.Transaction) uint32 {
 // tp.mutex.Lock()
 // tp.mutex.Unlock()
 func (tp *TxPool) Add(t *tx.Transaction) {
-	tp.mutex.Unlock()
-	defer tp.mutex.Lock()
+	tp.mutex.Lock()
+	defer tp.mutex.Unlock()
 
 	if tp.Length() < tp.Cap {
 		if t != nil {
@@ -152,14 +152,14 @@ func (tp *TxPool) Add(t *tx.Transaction) {
 // tp.TxQ.Rmv(...)
 
 func (tp *TxPool) ChkTxs(remover []*tx.Transaction) {
-	tp.mutex.Unlock()
-	defer tp.mutex.Lock()
+	tp.mutex.Lock()
+	defer tp.mutex.Unlock()
 
 	for _, t := range remover {
 		if t != nil {
 			if tp.TxQ.Has(t) {
 				tp.TxQ.Rmv([]*tx.Transaction{t})
-				tp.Ct.Sub(-1)
+				tp.Ct.Sub(1)
 				tp.CurPri.Sub(CalcPri(t))
 			}
 		} else {

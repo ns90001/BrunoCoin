@@ -141,6 +141,9 @@ func (m *Miner) HndlTx(t *tx.Transaction) {
 		if m.Active.Load() {
 			m.PoolUpdated <- true
 		}
+		//} else {
+		//	m.Mining.Store(true)
+		//}
 	} else {
 		fmt.Printf("ERROR {Miner.HndlTx}: transaction is nil")
 	}
