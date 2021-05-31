@@ -96,7 +96,14 @@ func (bc *Blockchain) SetAddr(a string) {
 // b.NameTag()
 // txo.MkTXOLoc(...)
 func (bc *Blockchain) Add(b *block.Block) {
-	//var prevBlock *BlockchainNode = bc.LastBlock
+	bc.Lock()
+	defer bc.Unlock()
+
+	var prevBlock = bc.LastBlock
+
+
+
+
 
 	return
 }

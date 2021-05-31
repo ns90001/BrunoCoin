@@ -6,6 +6,7 @@ import (
 	"BrunoCoin/pkg/blockchain"
 	"BrunoCoin/pkg/id"
 	"BrunoCoin/pkg/utils"
+	"fmt"
 	"go.uber.org/atomic"
 	"sync"
 )
@@ -96,6 +97,9 @@ func (m *Miner) StartMiner() {
 // m.IncChnLen()
 // m.HndlChkBlk(...)
 func (m *Miner) HndlBlk(b *block.Block) {
+	m.HndlChkBlk(b)
+	m.SetHash(b.Hash())
+	m.IncChnLen()
 	return
 }
 
@@ -110,7 +114,10 @@ func (m *Miner) HndlBlk(b *block.Block) {
 // m.TxP.ChkTxs(...)
 // m.PoolUpdated <- ...
 func (m *Miner) HndlChkBlk(b *block.Block) {
-
+	m.TxP.ChkTxs(b.Transactions)
+	if m.Active.Load() {
+		m.PoolUpdated <- true
+	}
 }
 
 
@@ -129,7 +136,17 @@ func (m *Miner) HndlChkBlk(b *block.Block) {
 // m.TxP.Add(...)
 // m.PoolUpdated <- ...
 func (m *Miner) HndlTx(t *tx.Transaction) {
-	return
+	if t != nil {
+		m.TxP.Add(t)
+		if m.Active.Load() {
+			m.PoolUpdated <- true
+		}
+		//} else {
+		//	m.Mining.Store(true)
+		//}
+	} else {
+		fmt.Printf("ERROR {Miner.HndlTx}: transaction is nil")
+	}
 }
 
 // SetChnLen (SetChainLength) sets the miner's perspective of the length of the main chain.
