@@ -157,7 +157,7 @@ func (tp *TxPool) ChkTxs(remover []*tx.Transaction) {
 
 	for _, t := range remover {
 		if t != nil {
-			if tp.TxQ.Has(t) {
+			if tp.TxQ.Has(t){
 				tp.TxQ.Rmv([]*tx.Transaction{t})
 				tp.Ct.Sub(1)
 				tp.CurPri.Sub(CalcPri(t))

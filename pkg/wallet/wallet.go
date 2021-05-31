@@ -3,8 +3,12 @@ package wallet
 import (
 	"BrunoCoin/pkg/block"
 	"BrunoCoin/pkg/block/tx"
+	"BrunoCoin/pkg/block/tx/txi"
+	"BrunoCoin/pkg/block/tx/txo"
 	"BrunoCoin/pkg/blockchain"
 	"BrunoCoin/pkg/id"
+	"BrunoCoin/pkg/proto"
+	"encoding/hex"
 	"sync"
 )
 
@@ -122,6 +126,15 @@ func New(c *Config, id id.ID, chain *blockchain.Blockchain) *Wallet {
 // t.NameTag()
 // w.SendTx <- ...
 func (w *Wallet) HndlBlk(b *block.Block) {
+	_, highPriority := w.LmnlTxs.ChkTxs(b.Transactions)
+
+	for _, t := range highPriority {
+		//ASK how to increment lock time
+		//proto.NewTx(t.Version, t.Inputs, t.Outputs, t.LockTime + 1)
+		w.LmnlTxs.Add(t)
+		w.SendTx <- t
+	}
+
 	return
 }
 
@@ -173,5 +186,30 @@ func (w *Wallet) HndlBlk(b *block.Block) {
 // proto.NewTxInpt(...)
 // proto.NewTxOutpt(...)
 func (w *Wallet) HndlTxReq(txR *TxReq) {
+
+	info, change, success := w.Chain.GetUTXOForAmt(txR.Amt, hex.EncodeToString(w.Id.GetPublicKeyBytes()))
+
+	if !success {
+		return
+	} else {
+		var newTxis = make([]*proto.TransactionInput, 0)
+		var newTxos = make([]*proto.TransactionOutput, 0)
+
+		for _, utxo := range info {
+			newTxis = append(newTxis, proto.NewTxInpt(utxo.TxHsh, utxo.OutIdx, utxo.UTXO.LockingScript, utxo.Amt))
+			fees := txR.Fee
+			output := utxo.Amt - fees
+			newTxos = append(newTxos, proto.NewTxOutpt(output, hex.EncodeToString(txR.PubK)))
+		}
+		protoTx := proto.NewTx(w.Conf.TxVer, newTxis, newTxos, w.Conf.DefLckTm)
+		t := tx.Deserialize(protoTx)
+		w.LmnlTxs.Add(t)
+		w.SendTx <- t
+
+		// maybe add a debug message
+
+	}
+
+
 	return
 }

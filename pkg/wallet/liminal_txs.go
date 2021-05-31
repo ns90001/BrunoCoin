@@ -2,6 +2,7 @@ package wallet
 
 import (
 	"BrunoCoin/pkg/block/tx"
+	"fmt"
 	"sync"
 )
 
@@ -69,8 +70,16 @@ func NewLmnlTxs(c *Config) *LiminalTxs {
 // l.TxQ.Rmv(...)
 // l.TxQ.IncAll()
 // l.TxQ.RemAbv(...)
+
 func (l *LiminalTxs) ChkTxs(txs []*tx.Transaction) ([]*tx.Transaction, []*tx.Transaction) {
-	return nil, nil
+	l.mutex.Lock()
+	defer l.mutex.Unlock()
+
+	remD := l.TxQ.Rmv(txs)
+	l.TxQ.IncAll()
+	remT := l.TxQ.RemAbv(l.TxRplyThresh)
+
+	return remT, remD
 }
 
 
@@ -90,5 +99,14 @@ func (l *LiminalTxs) ChkTxs(txs []*tx.Transaction) ([]*tx.Transaction, []*tx.Tra
 // l.mutex.Unlock()
 // l.TxQ.Add(...)
 func (l *LiminalTxs) Add(t *tx.Transaction) {
+	l.mutex.Lock()
+	defer l.mutex.Unlock()
+
+	if t != nil {
+		l.TxQ.Add(0, t)
+	} else {
+		fmt.Printf("ERROR {LiminalTxs.Add}: transaction is nil")
+	}
+
 	return
 }
