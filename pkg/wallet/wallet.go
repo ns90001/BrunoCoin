@@ -5,6 +5,7 @@ import (
 	"BrunoCoin/pkg/block/tx"
 	"BrunoCoin/pkg/blockchain"
 	"BrunoCoin/pkg/id"
+	"BrunoCoin/pkg/proto"
 	"sync"
 )
 
@@ -122,6 +123,8 @@ func New(c *Config, id id.ID, chain *blockchain.Blockchain) *Wallet {
 // t.NameTag()
 // w.SendTx <- ...
 func (w *Wallet) HndlBlk(b *block.Block) {
+	w.LmnlTxs.ChkTxs(b.Transactions)
+	w.SenTx <-
 	return
 }
 
@@ -173,5 +176,9 @@ func (w *Wallet) HndlBlk(b *block.Block) {
 // proto.NewTxInpt(...)
 // proto.NewTxOutpt(...)
 func (w *Wallet) HndlTxReq(txR *TxReq) {
-	return
+
+	proto.NewTxInpt()
+	proto.NewTx(w.Conf.TxVer,
+
+
 }
