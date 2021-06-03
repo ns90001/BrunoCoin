@@ -48,7 +48,22 @@ import (
 // b.Sz()
 // n.Chain.ChkChainsUTXO(...)
 func (n *Node) ChkBlk(b *block.Block) bool {
-	return false
+
+	sizeLessThanMax := b.Sz() < n.Conf.MxBlkSz
+	firstIsCoinbase := false
+	txsChecked := true
+
+	satisfiesPOW := b.SatisfiesPOW(b.Hdr.DiffTarg)
+
+	chkChains := n.Chain.ChkChainsUTXO(b.Transactions, b.Hdr.PrvBlkHsh)
+
+	for i, t := range b.Transactions {
+		if i == 0 {
+			firstIsCoinbase = t.IsCoinbase()
+		}
+		txsChecked = txsChecked && n.ChkTx(t)
+	}
+	return sizeLessThanMax && firstIsCoinbase && txsChecked && chkChains && satisfiesPOW
 }
 
 
@@ -83,6 +98,45 @@ func (n *Node) ChkBlk(b *block.Block) bool {
 // n.Chain.IsInvalidInput(...)
 // t.SumInputs()
 // t.SumOutputs()
-func (n *Node) ChkTx(t *tx.Transaction) bool {
+
+func containsHash(s string, hashes []string) bool{
+	for _, h := range hashes {
+		if h == s {
+			return true
+		}
+	}
 	return false
+}
+
+func (n *Node) ChkTx(t *tx.Transaction) bool {
+
+	inputsNonEmpty := len(t.Inputs) != 0
+	outputsNonEmpty := len(t.Inputs) != 0
+	outputsGreaterThanZero := t.SumOutputs() > 0
+	inputsLargerThanOutputs := t.SumInputs() > t.SumOutputs()
+	smallerThanMaxSize := t.Sz() <= n.Conf.MxBlkSz
+
+	seenHashes := make([]string, 0)
+
+	isUnlockedAndValid := true
+	notDoubleSpent := true
+
+	for idx, i := range t.Inputs {
+		if containsHash(i.Hash(), seenHashes) {
+			notDoubleSpent = false
+		}
+		seenHashes = append(seenHashes, i.Hash())
+		isUnlockedAndValid =
+			isUnlockedAndValid &&
+			n.Chain.IsInvalidInput(i) &&
+			t.Outputs[idx].IsUnlckd(n.Chain.GetUTXO(i).LockingScript)
+	}
+
+	return inputsNonEmpty &&
+		outputsNonEmpty &&
+		outputsGreaterThanZero &&
+		inputsLargerThanOutputs &&
+		smallerThanMaxSize &&
+		isUnlockedAndValid &&
+		notDoubleSpent
 }
