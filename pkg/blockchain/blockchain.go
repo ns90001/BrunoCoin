@@ -99,11 +99,20 @@ func (bc *Blockchain) Add(b *block.Block) {
 	bc.Lock()
 	defer bc.Unlock()
 
-	var prevBlock = bc.LastBlock
+	prevBlock := bc.LastBlock
+	prevBlockUtxo := prevBlock.utxo
 
+	for _, t := range b.Transactions {
+		for _, txinput := range t.Inputs {
+			prevBlockUtxo[txo.MkTXOLoc(txinput.Hash(), txinput.OutputIndex)] = t.Outputs[txinput.OutputIndex]
+		}
+	}
 
+	newNode := BlockchainNode{b, prevBlock, prevBlockUtxo, prevBlock.depth+1}
 
+	bc.LastBlock = &newNode
 
+	bc.blocks[b.Hash()] = &newNode
 
 	return
 }
