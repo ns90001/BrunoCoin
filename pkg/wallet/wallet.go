@@ -3,8 +3,6 @@ package wallet
 import (
 	"BrunoCoin/pkg/block"
 	"BrunoCoin/pkg/block/tx"
-	"BrunoCoin/pkg/block/tx/txi"
-	"BrunoCoin/pkg/block/tx/txo"
 	"BrunoCoin/pkg/blockchain"
 	"BrunoCoin/pkg/id"
 	"BrunoCoin/pkg/proto"
@@ -187,7 +185,7 @@ func (w *Wallet) HndlBlk(b *block.Block) {
 // proto.NewTxOutpt(...)
 func (w *Wallet) HndlTxReq(txR *TxReq) {
 
-	info, change, success := w.Chain.GetUTXOForAmt(txR.Amt, hex.EncodeToString(w.Id.GetPublicKeyBytes()))
+	info, _, success := w.Chain.GetUTXOForAmt(txR.Amt, hex.EncodeToString(w.Id.GetPublicKeyBytes()))
 
 	if !success {
 		return
