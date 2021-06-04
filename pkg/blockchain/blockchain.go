@@ -98,7 +98,7 @@ func (bc *Blockchain) SetAddr(a string) {
 func (bc *Blockchain) Add(b *block.Block) {
 	bc.Lock()
 	defer bc.Unlock()
-	fmt.Printf("HELLO5")
+	fmt.Printf("HELLO6")
 
 	prevBlock := bc.LastBlock
 	prevBlockUtxo := prevBlock.utxo
@@ -113,7 +113,7 @@ func (bc *Blockchain) Add(b *block.Block) {
 
 	bc.LastBlock = &newNode
 	bc.blocks[b.Hash()] = &newNode
-
+	fmt.Printf("HELLO7")
 	return
 }
 
