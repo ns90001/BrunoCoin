@@ -135,7 +135,7 @@ func (n *Node) ChkTx(t *tx.Transaction) bool {
 		isUnlockedAndValid := true
 		notDoubleSpent := true
 
-		for idx, i := range t.Inputs {
+		for _, i := range t.Inputs {
 			if containsHash(i.Hash(), seenHashes) {
 				notDoubleSpent = false
 			}
