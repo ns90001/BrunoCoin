@@ -97,10 +97,13 @@ func (m *Miner) StartMiner() {
 // m.IncChnLen()
 // m.HndlChkBlk(...)
 func (m *Miner) HndlBlk(b *block.Block) {
-	m.HndlChkBlk(b)
-	m.SetHash(b.Hash())
-	m.IncChnLen()
-	return
+	if b != nil {
+		m.HndlChkBlk(b)
+		m.SetHash(b.Hash())
+		m.IncChnLen()
+	} else {
+		fmt.Printf("ERROR {Miner.HndlBlk}: nil block")
+	}
 }
 
 // HndlChkBlk (HandleCheckBlock) handles updating

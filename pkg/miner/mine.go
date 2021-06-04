@@ -133,7 +133,7 @@ func (m *Miner) GenCBTx(txs []*tx.Transaction) *tx.Transaction {
 		var blockCount = m.ChnLen.Load()
 		var halvings uint32 = 1
 
-		for blockCount > c.SubsdyHlvRt && halvings <= c.MxHlvgs {
+		for blockCount >= c.SubsdyHlvRt && halvings <= c.MxHlvgs {
 			reward = reward / 2
 			halvings++
 			blockCount -= c.SubsdyHlvRt
