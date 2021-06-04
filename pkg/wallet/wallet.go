@@ -7,6 +7,7 @@ import (
 	"BrunoCoin/pkg/id"
 	"BrunoCoin/pkg/proto"
 	"encoding/hex"
+	"fmt"
 	"sync"
 )
 
@@ -185,33 +186,37 @@ func (w *Wallet) HndlBlk(b *block.Block) {
 // proto.NewTxOutpt(...)
 func (w *Wallet) HndlTxReq(txR *TxReq) {
 
-	info, change, success := w.Chain.GetUTXOForAmt(txR.Amt, hex.EncodeToString(w.Id.GetPublicKeyBytes()))
+	if txR.Amt > 0 {
+		info, change, success := w.Chain.GetUTXOForAmt(txR.Amt, hex.EncodeToString(w.Id.GetPublicKeyBytes()))
 
-	if !success {
-		return
+		if !success {
+			return
+		} else {
+			var newTxis = make([]*proto.TransactionInput, 0)
+			var newTxos = make([]*proto.TransactionOutput, 0)
+
+			for _, utxo := range info {
+				newTxis = append(newTxis, proto.NewTxInpt(utxo.TxHsh, utxo.OutIdx, utxo.UTXO.LockingScript, utxo.Amt))
+				fees := txR.Fee
+				output := utxo.Amt - fees
+				newTxos = append(newTxos, proto.NewTxOutpt(output, hex.EncodeToString(txR.PubK)))
+			}
+
+			//add change
+			if change != 0 {
+				newTxos = append(newTxos, proto.NewTxOutpt(change, hex.EncodeToString(w.Id.GetPublicKeyBytes())))
+			}
+
+			protoTx := proto.NewTx(w.Conf.TxVer, newTxis, newTxos, w.Conf.DefLckTm)
+			t := tx.Deserialize(protoTx)
+			w.LmnlTxs.Add(t)
+			w.SendTx <- t
+
+			// maybe add a debug message
+
+		}
 	} else {
-		var newTxis = make([]*proto.TransactionInput, 0)
-		var newTxos = make([]*proto.TransactionOutput, 0)
-
-		for _, utxo := range info {
-			newTxis = append(newTxis, proto.NewTxInpt(utxo.TxHsh, utxo.OutIdx, utxo.UTXO.LockingScript, utxo.Amt))
-			fees := txR.Fee
-			output := utxo.Amt - fees
-			newTxos = append(newTxos, proto.NewTxOutpt(output, hex.EncodeToString(txR.PubK)))
-		}
-
-		//add change
-		if change != 0 {
-			newTxos = append(newTxos, proto.NewTxOutpt(change, hex.EncodeToString(w.Id.GetPublicKeyBytes())))
-		}
-
-		protoTx := proto.NewTx(w.Conf.TxVer, newTxis, newTxos, w.Conf.DefLckTm)
-		t := tx.Deserialize(protoTx)
-		w.LmnlTxs.Add(t)
-		w.SendTx <- t
-
-		// maybe add a debug message
-
+		fmt.Printf("ERROR {Wallet.HndlTxReq}: no amount requested")
 	}
 
 
