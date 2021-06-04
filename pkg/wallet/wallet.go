@@ -185,7 +185,7 @@ func (w *Wallet) HndlBlk(b *block.Block) {
 // proto.NewTxOutpt(...)
 func (w *Wallet) HndlTxReq(txR *TxReq) {
 
-	info, _, success := w.Chain.GetUTXOForAmt(txR.Amt, hex.EncodeToString(w.Id.GetPublicKeyBytes()))
+	info, change, success := w.Chain.GetUTXOForAmt(txR.Amt, hex.EncodeToString(w.Id.GetPublicKeyBytes()))
 
 	if !success {
 		return
@@ -199,6 +199,12 @@ func (w *Wallet) HndlTxReq(txR *TxReq) {
 			output := utxo.Amt - fees
 			newTxos = append(newTxos, proto.NewTxOutpt(output, hex.EncodeToString(txR.PubK)))
 		}
+
+		//add change
+		if change != 0 {
+			newTxos = append(newTxos, proto.NewTxOutpt(change, hex.EncodeToString(w.Id.GetPublicKeyBytes())))
+		}
+
 		protoTx := proto.NewTx(w.Conf.TxVer, newTxis, newTxos, w.Conf.DefLckTm)
 		t := tx.Deserialize(protoTx)
 		w.LmnlTxs.Add(t)
