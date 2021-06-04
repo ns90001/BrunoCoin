@@ -98,6 +98,7 @@ func (bc *Blockchain) SetAddr(a string) {
 func (bc *Blockchain) Add(b *block.Block) {
 	bc.Lock()
 	defer bc.Unlock()
+	fmt.Printf("HELLO5")
 
 	prevBlock := bc.LastBlock
 	prevBlockUtxo := prevBlock.utxo
@@ -338,6 +339,8 @@ func (bc *Blockchain) GetUTXOForAmt(amt uint32, pubKey string) ([]*UTXOInfo, uin
 	bc.Lock()
 	defer bc.Unlock()
 
+	fmt.Printf("HELLO1")
+
 	var lastBlock = bc.LastBlock
 
 	var current uint32 = 0
@@ -347,9 +350,13 @@ func (bc *Blockchain) GetUTXOForAmt(amt uint32, pubKey string) ([]*UTXOInfo, uin
 
 	isEnough := false
 
+	fmt.Printf("HELLO2")
+
 	for key, element := range lastBlock.utxo {
 		hash, i := txo.PrsTXOLoc(key)
 		amount := element.Amount
+
+		fmt.Printf("HELLO3")
 
 		if element.LockingScript == pubKey {
 			if !isEnough {
@@ -361,6 +368,8 @@ func (bc *Blockchain) GetUTXOForAmt(amt uint32, pubKey string) ([]*UTXOInfo, uin
 
 					//Ask TA for OK
 					change += diff
+
+					fmt.Printf("HELLO4")
 
 					out := UTXOInfo{hash, i, element, amount - diff}
 					currentInfo = append(currentInfo, &out)
@@ -374,6 +383,7 @@ func (bc *Blockchain) GetUTXOForAmt(amt uint32, pubKey string) ([]*UTXOInfo, uin
 		}
 	}
 
+	fmt.Printf("HELLO5")
 	return currentInfo, change, isEnough
 }
 
