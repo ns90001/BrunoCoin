@@ -131,7 +131,7 @@ func (m *Miner) GenCBTx(txs []*tx.Transaction) *tx.Transaction {
 		// Calculate minting reward
 		var reward = c.InitSubsdy
 		var blockCount = m.ChnLen.Load()
-		var halvings uint32 = 0
+		var halvings uint32 = 1
 
 		for blockCount > c.SubsdyHlvRt && halvings <= c.MxHlvgs {
 			reward = reward / 2

@@ -114,9 +114,13 @@ func (m *Miner) HndlBlk(b *block.Block) {
 // m.TxP.ChkTxs(...)
 // m.PoolUpdated <- ...
 func (m *Miner) HndlChkBlk(b *block.Block) {
-	m.TxP.ChkTxs(b.Transactions)
-	if m.Active.Load() {
-		m.PoolUpdated <- true
+	if b != nil {
+		m.TxP.ChkTxs(b.Transactions)
+		if m.Active.Load() {
+			m.PoolUpdated <- true
+		}
+	} else {
+		fmt.Printf("ERROR {Miner.HndlChkBlk}: nil block")
 	}
 }
 
