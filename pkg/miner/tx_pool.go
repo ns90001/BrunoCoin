@@ -88,12 +88,13 @@ func CalcPri(t *tx.Transaction) uint32 {
 
 		if priority == 0 {
 			return 1
+		} else {
+			return priority
 		}
 	} else {
 		fmt.Errorf("transaction is nil")
+		return 0
 	}
-
-	return 0
 }
 
 

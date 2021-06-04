@@ -3,6 +3,7 @@ package pkg
 import (
 	"BrunoCoin/pkg/block"
 	"BrunoCoin/pkg/block/tx"
+	"fmt"
 )
 
 /*
@@ -49,21 +50,32 @@ import (
 // n.Chain.ChkChainsUTXO(...)
 func (n *Node) ChkBlk(b *block.Block) bool {
 
-	sizeLessThanMax := b.Sz() < n.Conf.MxBlkSz
-	firstIsCoinbase := false
-	txsChecked := true
+	if b != nil {
 
-	satisfiesPOW := b.SatisfiesPOW(b.Hdr.DiffTarg)
+		sizeLessThanMax := b.Sz() < n.Conf.MxBlkSz
+		firstIsCoinbase := false
+		txsChecked := true
 
-	chkChains := n.Chain.ChkChainsUTXO(b.Transactions, b.Hdr.PrvBlkHsh)
+		satisfiesPOW := b.SatisfiesPOW(b.Hdr.DiffTarg)
 
-	for i, t := range b.Transactions {
-		if i == 0 {
-			firstIsCoinbase = t.IsCoinbase()
+		chkChains := n.Chain.ChkChainsUTXO(b.Transactions, b.Hdr.PrvBlkHsh)
+
+		for i, t := range b.Transactions {
+			if t != nil {
+				if i == 0 {
+					firstIsCoinbase = t.IsCoinbase()
+				}
+				txsChecked = txsChecked && n.ChkTx(t)
+			} else {
+				fmt.Printf("ERROR {Node.ChkBlk}: nil transaction")
+				return false
+			}
 		}
-		txsChecked = txsChecked && n.ChkTx(t)
+		return sizeLessThanMax && firstIsCoinbase && txsChecked && chkChains && satisfiesPOW
+	} else {
+		fmt.Printf("ERROR {Miner.GenCBTx}: nil block")
+		return false
 	}
-	return sizeLessThanMax && firstIsCoinbase && txsChecked && chkChains && satisfiesPOW
 }
 
 
@@ -110,33 +122,39 @@ func containsHash(s string, hashes []string) bool{
 
 func (n *Node) ChkTx(t *tx.Transaction) bool {
 
-	inputsNonEmpty := len(t.Inputs) != 0
-	outputsNonEmpty := len(t.Inputs) != 0
-	outputsGreaterThanZero := t.SumOutputs() > 0
-	inputsLargerThanOutputs := t.SumInputs() > t.SumOutputs()
-	smallerThanMaxSize := t.Sz() <= n.Conf.MxBlkSz
+	if t != nil {
 
-	seenHashes := make([]string, 0)
+		inputsNonEmpty := len(t.Inputs) != 0
+		outputsNonEmpty := len(t.Outputs) != 0
+		outputsGreaterThanZero := t.SumOutputs() > 0
+		inputsLargerThanOutputs := t.SumInputs() > t.SumOutputs()
+		smallerThanMaxSize := t.Sz() <= n.Conf.MxBlkSz
 
-	isUnlockedAndValid := true
-	notDoubleSpent := true
+		seenHashes := make([]string, 0)
 
-	for idx, i := range t.Inputs {
-		if containsHash(i.Hash(), seenHashes) {
-			notDoubleSpent = false
+		isUnlockedAndValid := true
+		notDoubleSpent := true
+
+		for idx, i := range t.Inputs {
+			if containsHash(i.Hash(), seenHashes) {
+				notDoubleSpent = false
+			}
+			seenHashes = append(seenHashes, i.Hash())
+			isUnlockedAndValid =
+				isUnlockedAndValid &&
+					n.Chain.IsInvalidInput(i) &&
+					t.Outputs[idx].IsUnlckd(n.Chain.GetUTXO(i).LockingScript)
 		}
-		seenHashes = append(seenHashes, i.Hash())
-		isUnlockedAndValid =
-			isUnlockedAndValid &&
-			n.Chain.IsInvalidInput(i) &&
-			t.Outputs[idx].IsUnlckd(n.Chain.GetUTXO(i).LockingScript)
-	}
 
-	return inputsNonEmpty &&
-		outputsNonEmpty &&
-		outputsGreaterThanZero &&
-		inputsLargerThanOutputs &&
-		smallerThanMaxSize &&
-		isUnlockedAndValid &&
-		notDoubleSpent
+		return inputsNonEmpty &&
+			outputsNonEmpty &&
+			outputsGreaterThanZero &&
+			inputsLargerThanOutputs &&
+			smallerThanMaxSize &&
+			isUnlockedAndValid &&
+			notDoubleSpent
+	} else {
+		fmt.Printf("ERROR {Node.ChkTx}: nil transaction")
+		return false
+	}
 }

@@ -7,6 +7,7 @@ import (
 	"BrunoCoin/pkg/utils"
 	"context"
 	"encoding/hex"
+	"fmt"
 )
 
 /*
@@ -112,31 +113,41 @@ func (m *Miner) GenCBTx(txs []*tx.Transaction) *tx.Transaction {
 
 	var fees uint32 = 0
 
-	// Calculate miner fees
-	for _, t := range txs {
-		fees += t.SumInputs() - t.SumOutputs()
+	if len(txs) == 0 || txs == nil {
+		fmt.Printf("ERROR {Miner.GenCBTx}: no transactions given")
+	} else {
+
+		// Calculate miner fees
+		for _, t := range txs {
+			if t != nil {
+				fees += t.SumInputs() - t.SumOutputs()
+			} else {
+				fmt.Printf("ERROR {Miner.GenCBTx}: nil transaction")
+				return nil
+			}
+		}
+
+		// Calculate minting reward
+		var reward = c.InitSubsdy
+		var blockCount = m.ChnLen.Load()
+		var halvings uint32 = 0
+
+		for blockCount > c.SubsdyHlvRt && halvings <= c.MxHlvgs {
+			reward = reward / 2
+			halvings++
+			blockCount -= c.SubsdyHlvRt
+		}
+
+		// Create coinbase transaction
+
+		var CBOut = proto.NewTxOutpt(fees+reward, hex.EncodeToString(m.Id.GetPublicKeyBytes()))
+
+		var CBOutList = make([]*proto.TransactionOutput, 0)
+		CBOutList = append(CBOutList, CBOut)
+
+		var CBTx = proto.NewTx(m.Conf.Ver, make([]*proto.TransactionInput, 0), CBOutList, m.Conf.DefLckTm)
+
+		return tx.Deserialize(CBTx)
 	}
-
-	// Calculate minting reward
-	var reward = c.InitSubsdy
-	var blockCount = m.ChnLen.Load()
-	var halvings uint32 = 0
-
-	for blockCount > c.SubsdyHlvRt && halvings <= c.MxHlvgs {
-		reward = reward / 2
-		halvings++
-		blockCount -= c.SubsdyHlvRt
-	}
-
-	// Create coinbase transaction
-
-	var CBOut = proto.NewTxOutpt(fees + reward, hex.EncodeToString(m.Id.GetPublicKeyBytes()))
-
-	var CBOutList = make([]*proto.TransactionOutput, 0)
-	CBOutList = append(CBOutList, CBOut)
-
-	var CBTx = proto.NewTx(m.Conf.Ver, make([]*proto.TransactionInput, 0), CBOutList, m.Conf.DefLckTm)
-
-	return tx.Deserialize(CBTx)
 }
 
