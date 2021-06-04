@@ -103,15 +103,14 @@ func (bc *Blockchain) Add(b *block.Block) {
 	prevBlockUtxo := prevBlock.utxo
 
 	for _, t := range b.Transactions {
-		for _, txinput := range t.Inputs {
-			prevBlockUtxo[txo.MkTXOLoc(txinput.Hash(), txinput.OutputIndex)] = t.Outputs[txinput.OutputIndex]
+		for _, _ = range t.Inputs {
+			//prevBlockUtxo[txo.MkTXOLoc(txinput.Hash(), txinput.OutputIndex)] = t.Outputs[txinput.OutputIndex]
 		}
 	}
 
 	newNode := BlockchainNode{b, prevBlock, prevBlockUtxo, prevBlock.depth+1}
 
 	bc.LastBlock = &newNode
-
 	bc.blocks[b.Hash()] = &newNode
 
 	return
