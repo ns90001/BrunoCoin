@@ -115,6 +115,7 @@ func (m *Miner) GenCBTx(txs []*tx.Transaction) *tx.Transaction {
 
 	if len(txs) == 0 || txs == nil {
 		fmt.Printf("ERROR {Miner.GenCBTx}: no transactions given")
+		return nil
 	} else {
 
 		// Calculate miner fees
