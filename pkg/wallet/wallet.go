@@ -125,13 +125,17 @@ func New(c *Config, id id.ID, chain *blockchain.Blockchain) *Wallet {
 // t.NameTag()
 // w.SendTx <- ...
 func (w *Wallet) HndlBlk(b *block.Block) {
-	_, highPriority := w.LmnlTxs.ChkTxs(b.Transactions)
+	if b != nil {
+		_, highPriority := w.LmnlTxs.ChkTxs(b.Transactions)
 
-	for _, t := range highPriority {
-		//ASK how to increment lock time
-		//proto.NewTx(t.Version, t.Inputs, t.Outputs, t.LockTime + 1)
-		w.LmnlTxs.Add(t)
-		w.SendTx <- t
+		for _, t := range highPriority {
+			//ASK how to increment lock time
+			//proto.NewTx(t.Version, t.Inputs, t.Outputs, t.LockTime + 1)
+			w.LmnlTxs.Add(t)
+			w.SendTx <- t
+		}
+	} else {
+		fmt.Printf("ERROR {Wallet.HndlBlk}: Inputted block is nil")
 	}
 
 	return
@@ -186,37 +190,43 @@ func (w *Wallet) HndlBlk(b *block.Block) {
 // proto.NewTxOutpt(...)
 func (w *Wallet) HndlTxReq(txR *TxReq) {
 
-	if txR.Amt > 0 {
-		info, change, success := w.Chain.GetUTXOForAmt(txR.Amt, hex.EncodeToString(w.Id.GetPublicKeyBytes()))
+	if txR != nil {
 
-		if !success {
-			return
+		if txR.Amt > 0 {
+			info, change, success := w.Chain.GetUTXOForAmt(txR.Amt, hex.EncodeToString(w.Id.GetPublicKeyBytes()))
+
+			if !success {
+				fmt.Printf("ERROR {Wallet.HndlTxReq}: could not get utxo for this request")
+				return
+			} else {
+				var newTxis = make([]*proto.TransactionInput, 0)
+				var newTxos = make([]*proto.TransactionOutput, 0)
+
+				for _, utxo := range info {
+					newTxis = append(newTxis, proto.NewTxInpt(utxo.TxHsh, utxo.OutIdx, utxo.UTXO.LockingScript, utxo.Amt))
+					fees := txR.Fee
+					output := utxo.Amt - fees
+					newTxos = append(newTxos, proto.NewTxOutpt(output, hex.EncodeToString(txR.PubK)))
+				}
+
+				//add change
+				if change != 0 {
+					newTxos = append(newTxos, proto.NewTxOutpt(change, hex.EncodeToString(w.Id.GetPublicKeyBytes())))
+				}
+
+				protoTx := proto.NewTx(w.Conf.TxVer, newTxis, newTxos, w.Conf.DefLckTm)
+				t := tx.Deserialize(protoTx)
+				w.LmnlTxs.Add(t)
+				w.SendTx <- t
+
+				// maybe add a debug message
+
+			}
 		} else {
-			var newTxis = make([]*proto.TransactionInput, 0)
-			var newTxos = make([]*proto.TransactionOutput, 0)
-
-			for _, utxo := range info {
-				newTxis = append(newTxis, proto.NewTxInpt(utxo.TxHsh, utxo.OutIdx, utxo.UTXO.LockingScript, utxo.Amt))
-				fees := txR.Fee
-				output := utxo.Amt - fees
-				newTxos = append(newTxos, proto.NewTxOutpt(output, hex.EncodeToString(txR.PubK)))
-			}
-
-			//add change
-			if change != 0 {
-				newTxos = append(newTxos, proto.NewTxOutpt(change, hex.EncodeToString(w.Id.GetPublicKeyBytes())))
-			}
-
-			protoTx := proto.NewTx(w.Conf.TxVer, newTxis, newTxos, w.Conf.DefLckTm)
-			t := tx.Deserialize(protoTx)
-			w.LmnlTxs.Add(t)
-			w.SendTx <- t
-
-			// maybe add a debug message
-
+			fmt.Printf("ERROR {Wallet.HndlTxReq}: no amount requested")
 		}
 	} else {
-		fmt.Printf("ERROR {Wallet.HndlTxReq}: no amount requested")
+		fmt.Printf("ERROR {Wallet.HndlTxReq}: nil input")
 	}
 
 

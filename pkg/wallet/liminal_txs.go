@@ -75,11 +75,15 @@ func (l *LiminalTxs) ChkTxs(txs []*tx.Transaction) ([]*tx.Transaction, []*tx.Tra
 	l.mutex.Lock()
 	defer l.mutex.Unlock()
 
-	remD := l.TxQ.Rmv(txs)
-	l.TxQ.IncAll()
-	remT := l.TxQ.RemAbv(l.TxRplyThresh)
-
-	return remT, remD
+	if txs != nil {
+		remD := l.TxQ.Rmv(txs)
+		l.TxQ.IncAll()
+		remT := l.TxQ.RemAbv(l.TxRplyThresh)
+		return remT, remD
+	} else {
+		fmt.Printf("ERROR {LiminalTxs.ChkTxs}: nil input list")
+		return nil, nil
+	}
 }
 
 
