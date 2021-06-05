@@ -339,6 +339,43 @@ func TestCalcPriNilInput (t *testing.T) {
 
 }
 
+func TestCalcPriHighPriority (t *testing.T) {
+	genNd := NewGenNd()
+	genNd.Start()
+	genNd.StartMiner()
+
+	inputs := []*txi.TransactionInput{
+		{
+			TransactionHash: "123",
+			OutputIndex:     0,
+			UnlockingScript: "123",
+			Amount:          100,
+		}}
+
+	outputs := []*txo.TransactionOutput{
+		{
+			Amount:        1,
+			LockingScript: "123",
+			Liminal:       false,
+		},
+	}
+
+	transaction := tx.Transaction{
+		Version:  1,
+		Inputs: inputs,
+		Outputs:  outputs,
+		LockTime: 0,
+	}
+
+	// fees are 99 in this case, so priority is high
+	priority := miner.CalcPri(&transaction)
+
+	if priority != 145 {
+		t.Errorf("priority expected to be 145, received: %v", priority)
+	}
+
+}
+
 // Add Tests
 func TestAddNilTx (t *testing.T) {
 	old := os.Stdout // keep backup of the real stdout
