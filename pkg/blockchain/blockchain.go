@@ -353,18 +353,12 @@ func (bc *Blockchain) GetUTXOForAmt(amt uint32, pubKey string) ([]*UTXOInfo, uin
 	var current uint32 = 0
 	var currentInfo = make([]*UTXOInfo, 0)
 
-	var change uint32 = 0
-
-	isEnough := false
-
 	for key, element := range lastBlock.utxo {
 		hash, i := txo.PrsTXOLoc(key)
 		amount := element.Amount
 
 		if element.LockingScript == pubKey && !element.Liminal {
 			if current >= amt {
-				isEnough = true
-				change = current - amt
 				break
 			} else {
 				current += amount
@@ -376,7 +370,7 @@ func (bc *Blockchain) GetUTXOForAmt(amt uint32, pubKey string) ([]*UTXOInfo, uin
 
 	}
 
-	return currentInfo, change, isEnough
+	return currentInfo, current - amt, current >= amt
 }
 
 // GenesisBlock creates the genesis block from
