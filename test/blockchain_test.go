@@ -7,11 +7,11 @@ import (
 	"BrunoCoin/pkg/block/tx/txo"
 	"BrunoCoin/pkg/blockchain"
 	"bytes"
+	"encoding/hex"
 	"io"
 	"os"
 	"strings"
 	"testing"
-	"encoding/hex"
 )
 
 func TestGetUTXOForAmt(t *testing.T) {
@@ -108,4 +108,9 @@ func TestAdd(t *testing.T) {
 		testBlk := block.New(genNd.Chain.LastBlock.Hash(), transactions, hex.EncodeToString([]byte{byte1}))
 
 		bc.Add(testBlk)
+
+		if bc.LastBlock.Block != testBlk {
+			t.Errorf("ERROR {blockchain.Add}: Failed to add block")
+		}
+
 }
