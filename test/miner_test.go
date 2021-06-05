@@ -444,7 +444,7 @@ func TestAddPoolFull (t *testing.T) {
 
 }
 
-func TestAddNormal (t *testing.T) {
+func TestMinerAddNormal (t *testing.T) {
 	genNd := NewGenNd()
 	genNd.Start()
 	genNd.StartMiner()
@@ -555,7 +555,7 @@ func TestChkTxsNormal (t *testing.T) {
 
 }
 
-func TestChkTxsNilInput (t *testing.T) {
+func TestMiningChkTxsNilInput (t *testing.T) {
 	old := os.Stdout // keep backup of the real stdout
 	r, w, _ := os.Pipe()
 	os.Stdout = w
