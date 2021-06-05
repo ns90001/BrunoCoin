@@ -46,4 +46,8 @@ func TestAdd(t *testing.T) {
 	testBlk := block.New(genNd.Chain.LastBlock.Hash(), transactions, hex.EncodeToString([]byte{byte1}))
 
 	bc.Add(testBlk)
+
+	if bc.LastBlock.Block != testBlk {
+		t.Errorf("ERROR {blockchain.Add}: Failed to add block")
+	}
 }

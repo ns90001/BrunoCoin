@@ -95,6 +95,7 @@ func (bc *Blockchain) SetAddr(a string) {
 // utils.FmtAddr(...)
 // b.NameTag()
 // txo.MkTXOLoc(...)
+
 func (bc *Blockchain) Add(b *block.Block) {
 	bc.Lock()
 	defer bc.Unlock()
@@ -361,24 +362,15 @@ func (bc *Blockchain) GetUTXOForAmt(amt uint32, pubKey string) ([]*UTXOInfo, uin
 		amount := element.Amount
 
 		if element.LockingScript == pubKey {
-			if !isEnough {
-				current += amount
-
-				if current >= amt {
-					isEnough = true
-					diff := current - amt
-
-					//Ask TA for OK
-					change += diff
-
-					out := UTXOInfo{hash, i, element, amount - diff}
-					currentInfo = append(currentInfo, &out)
-				} else {
-					out := UTXOInfo{hash, i, element, amount}
-					currentInfo = append(currentInfo, &out)
-				}
+			if current >= amt {
+				isEnough = true
+				change = current - amt
+				break
 			} else {
-				change += amount
+				current += amount
+				out := UTXOInfo{hash, i, element, amount}
+				currentInfo = append(currentInfo, &out)
+				element.Liminal = true
 			}
 		}
 	}
