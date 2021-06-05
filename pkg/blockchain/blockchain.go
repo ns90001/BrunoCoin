@@ -115,8 +115,11 @@ func (bc *Blockchain) Add(b *block.Block) {
 
 	newNode := BlockchainNode{b, prevBlock, prevBlockUtxo, prevBlock.depth+1}
 
-	bc.LastBlock = &newNode
 	bc.blocks[b.Hash()] = &newNode
+
+	if prevBlock.depth < newNode.depth || (newNode.Hash() < prevBlock.Hash() && prevBlock.depth == newNode.depth) {
+		bc.LastBlock = &newNode
+	}
 
 	return
 }
