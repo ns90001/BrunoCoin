@@ -361,7 +361,7 @@ func (bc *Blockchain) GetUTXOForAmt(amt uint32, pubKey string) ([]*UTXOInfo, uin
 		hash, i := txo.PrsTXOLoc(key)
 		amount := element.Amount
 
-		if element.LockingScript == pubKey {
+		if element.LockingScript == pubKey && !element.Liminal {
 			if current >= amt {
 				isEnough = true
 				change = current - amt
