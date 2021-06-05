@@ -1,6 +1,7 @@
 package test
 
 import (
+	"BrunoCoin/pkg/block"
 	"BrunoCoin/pkg/block/tx"
 	"BrunoCoin/pkg/block/tx/txi"
 	"BrunoCoin/pkg/block/tx/txo"
@@ -92,6 +93,11 @@ func TestChkTxNormalTx (t *testing.T) {
 		Outputs:  outputs,
 		LockTime: 0,
 	}
+
+	genNd.Chain.Add(&block.Block{
+		Hdr:          block.Header{},
+		Transactions: []*tx.Transaction{&transaction},
+	})
 
 	isValid := genNd.ChkTx(&transaction)
 

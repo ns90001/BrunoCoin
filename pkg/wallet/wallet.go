@@ -129,8 +129,7 @@ func (w *Wallet) HndlBlk(b *block.Block) {
 		_, highPriority := w.LmnlTxs.ChkTxs(b.Transactions)
 
 		for _, t := range highPriority {
-			//ASK how to increment lock time
-			//proto.NewTx(t.Version, t.Inputs, t.Outputs, t.LockTime + 1)
+			t.LockTime++
 			w.LmnlTxs.Add(t)
 			w.SendTx <- t
 		}

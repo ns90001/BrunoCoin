@@ -140,10 +140,16 @@ func (n *Node) ChkTx(t *tx.Transaction) bool {
 				notDoubleSpent = false
 			}
 			seenHashes = append(seenHashes, i.Hash())
-			isUnlockedAndValid =
-				isUnlockedAndValid &&
-					n.Chain.IsInvalidInput(i) //&&
-					//t.Outputs[idx].IsUnlckd(n.Chain.GetUTXO(i).LockingScript)
+			u := n.Chain.GetUTXO(i)
+			if u != nil {
+				isUnlockedAndValid =
+					isUnlockedAndValid &&
+						n.Chain.IsInvalidInput(i) &&
+						n.Chain.GetUTXO(i).IsUnlckd(i.UnlockingScript)
+			} else {
+				fmt.Printf("nil utxo")
+				isUnlockedAndValid = false
+			}
 		}
 
 		return inputsNonEmpty &&

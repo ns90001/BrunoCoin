@@ -103,8 +103,13 @@ func (bc *Blockchain) Add(b *block.Block) {
 	prevBlockUtxo := prevBlock.utxo
 
 	for _, t := range b.Transactions {
-		for _, _ = range t.Inputs {
-			//prevBlockUtxo[txo.MkTXOLoc(txinput.Hash(), txinput.OutputIndex)] = t.Outputs[txinput.OutputIndex]
+		for _, txinput := range t.Inputs {
+			loc := txo.MkTXOLoc(txinput.TransactionHash, txinput.OutputIndex)
+			delete(prevBlockUtxo, loc)
+		}
+		for idx, txoutput := range t.Outputs {
+			loc := txo.MkTXOLoc(t.Hash(), uint32(idx))
+			prevBlockUtxo[loc] = txoutput
 		}
 	}
 
