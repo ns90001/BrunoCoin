@@ -6,6 +6,7 @@ import (
 	"BrunoCoin/pkg/block/tx/txi"
 	"BrunoCoin/pkg/block/tx/txo"
 	"bytes"
+	"encoding/hex"
 	"io"
 	"os"
 	"strings"
@@ -179,3 +180,33 @@ func TestChkTxOutputsGreaterInput (t *testing.T) {
 	}
 
 }
+
+func TestChkBlk(t *testing.T) {
+	genNd := NewGenNd()
+	genNd.Start()
+	genNd.StartMiner()
+
+	var byte1 byte = 0
+
+	testHdr := block.Header{
+		Ver:       0,
+		PrvBlkHsh: "",
+		MrklRt:    "",
+		Timestamp: 0,
+		DiffTarg:  hex.EncodeToString([]byte{byte1}),
+		Nonce:     0,
+	}
+
+	b := block.Block{
+		Hdr: testHdr,
+		Transactions: nil,
+	}
+
+	t1 := genNd.ChkBlk(&b)
+
+	if t1 {
+		t.Errorf("ERROR {validation.ChkBlk}: POW not satisfied")
+	}
+
+}
+
