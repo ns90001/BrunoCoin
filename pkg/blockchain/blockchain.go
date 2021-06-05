@@ -99,7 +99,7 @@ func (bc *Blockchain) Add(b *block.Block) {
 	bc.Lock()
 	defer bc.Unlock()
 
-	prevBlock := bc.LastBlock
+	prevBlock := bc.blocks[b.Hdr.PrvBlkHsh]
 	prevBlockUtxo := prevBlock.utxo
 
 	for _, t := range b.Transactions {
@@ -117,7 +117,8 @@ func (bc *Blockchain) Add(b *block.Block) {
 
 	bc.blocks[b.Hash()] = &newNode
 
-	if prevBlock.depth < newNode.depth || (newNode.Hash() < prevBlock.Hash() && prevBlock.depth == newNode.depth) {
+	prevNode := bc.LastBlock
+	if newNode.depth >= prevNode.depth || (newNode.Hash() < prevNode.Hash() && prevNode.depth == newNode.depth) {
 		bc.LastBlock = &newNode
 	}
 
