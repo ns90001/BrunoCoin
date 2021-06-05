@@ -92,7 +92,7 @@ func CalcPri(t *tx.Transaction) uint32 {
 			return priority
 		}
 	} else {
-		fmt.Errorf("transaction is nil")
+		fmt.Printf("transaction is nil")
 		return 0
 	}
 }
@@ -122,15 +122,17 @@ func (tp *TxPool) Add(t *tx.Transaction) {
 	tp.mutex.Lock()
 	defer tp.mutex.Unlock()
 
-	if tp.Length() < tp.Cap {
-		if t != nil {
+	if t != nil {
+		if tp.Length() < tp.Cap {
 			var priority = CalcPri(t)
 			tp.CurPri.Add(priority)
 			tp.Ct.Add(1)
 			tp.TxQ.Add(priority, t)
 		} else {
-			fmt.Printf("ERROR {TxPool.Add}: transaction is nil")
+			fmt.Printf("ERROR {TxPool.Add}: transaction pool is full")
 		}
+	} else {
+		fmt.Printf("ERROR {TxPool.Add}: transaction is nil")
 	}
 }
 
@@ -156,16 +158,22 @@ func (tp *TxPool) ChkTxs(remover []*tx.Transaction) {
 	tp.mutex.Lock()
 	defer tp.mutex.Unlock()
 
-	for _, t := range remover {
-		if t != nil {
-			if tp.TxQ.Has(t){
-				tp.TxQ.Rmv([]*tx.Transaction{t})
-				tp.Ct.Sub(1)
-				tp.CurPri.Sub(CalcPri(t))
+	if remover != nil {
+
+		for _, t := range remover {
+			if t != nil {
+				if tp.TxQ.Has(t) {
+					tp.TxQ.Rmv([]*tx.Transaction{t})
+					tp.Ct.Sub(1)
+					tp.CurPri.Sub(CalcPri(t))
+				}
+			} else {
+				fmt.Printf("ERROR {TxPool.ChkTxs}: transaction is nil")
 			}
-		} else {
-			fmt.Printf("ERROR {TxPool.Add}: transaction is nil")
 		}
+
+	} else {
+		fmt.Printf("ERROR {TxPool.ChkTxs}: input list is nil")
 	}
 
 }
