@@ -344,23 +344,22 @@ type UTXOInfo struct {
 // bc.Lock()
 // bc.Unlock()
 func (bc *Blockchain) GetUTXOForAmt(amt uint32, pubKey string) ([]*UTXOInfo, uint32, bool) {
-	fmt.Println("0")
 	bc.Lock()
 	defer bc.Unlock()
-	fmt.Printf("1")
+
 	var lastBlock = bc.LastBlock
 
 	var current uint32 = 0
 	var currentInfo = make([]*UTXOInfo, 0)
 
 	var change uint32 = 0
-	fmt.Printf("2")
+
 	isEnough := false
 
 	for key, element := range lastBlock.utxo {
 		hash, i := txo.PrsTXOLoc(key)
 		amount := element.Amount
-		fmt.Printf("3")
+
 		if element.LockingScript == pubKey {
 			if !isEnough {
 				current += amount
@@ -368,7 +367,7 @@ func (bc *Blockchain) GetUTXOForAmt(amt uint32, pubKey string) ([]*UTXOInfo, uin
 				if current >= amt {
 					isEnough = true
 					diff := current - amt
-					fmt.Printf("4")
+
 					//Ask TA for OK
 					change += diff
 
@@ -382,7 +381,7 @@ func (bc *Blockchain) GetUTXOForAmt(amt uint32, pubKey string) ([]*UTXOInfo, uin
 				change += amount
 			}
 		}
-		fmt.Printf("5")
+
 	}
 
 	return currentInfo, change, isEnough
