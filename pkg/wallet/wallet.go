@@ -188,38 +188,47 @@ func (w *Wallet) HndlBlk(b *block.Block) {
 // proto.NewTxInpt(...)
 // proto.NewTxOutpt(...)
 func (w *Wallet) HndlTxReq(txR *TxReq) {
-
 	if txR != nil {
-
 		if txR.Amt > 0 {
-			info, change, success := w.Chain.GetUTXOForAmt(txR.Amt, hex.EncodeToString(w.Id.GetPublicKeyBytes()))
+			if txR.PubK != nil {
+				info, change, success := w.Chain.GetUTXOForAmt(txR.Amt+txR.Fee,
+					hex.EncodeToString(w.Id.GetPublicKeyBytes()))
 
-			if !success {
-				fmt.Printf("ERROR {Wallet.HndlTxReq}: could not get utxo for this request")
-				return
-			} else {
-				var newTxis = make([]*proto.TransactionInput, 0)
-				var newTxos = make([]*proto.TransactionOutput, 0)
+				if !success {
+					fmt.Printf("ERROR {Wallet.HndlTxReq}: could not get utxo for this request")
+					return
+				} else {
+					var newTxis []*proto.TransactionInput
+					var newTxos []*proto.TransactionOutput
 
-				for _, utxo := range info {
-					newTxis = append(newTxis, proto.NewTxInpt(utxo.TxHsh, utxo.OutIdx, utxo.UTXO.LockingScript, utxo.Amt))
-					fees := txR.Fee
-					output := utxo.Amt - fees
+					for _, utxo := range info {
+						sig, error := utxo.UTXO.MkSig(w.Id)
+						if error != nil {
+							fmt.Printf("ERROR {HndlTxReq}: Error thrown while forming sig")
+						}
+						newTxis = append(newTxis, proto.NewTxInpt(utxo.TxHsh,
+							utxo.OutIdx, sig, utxo.Amt))
+					}
+
+					output := txR.Amt
 					newTxos = append(newTxos, proto.NewTxOutpt(output, hex.EncodeToString(txR.PubK)))
+
+					//add change
+					if change != 0 {
+						newTxos = append(newTxos, proto.NewTxOutpt(change,
+							hex.EncodeToString(w.Id.GetPublicKeyBytes())))
+					}
+
+					protoTx := proto.NewTx(w.Conf.TxVer, newTxis, newTxos, w.Conf.DefLckTm)
+					t := tx.Deserialize(protoTx)
+
+					w.LmnlTxs.Add(t)
+					w.SendTx <- t
+
+					// maybe add a debug message
 				}
-
-				//add change
-				if change != 0 {
-					newTxos = append(newTxos, proto.NewTxOutpt(change, hex.EncodeToString(w.Id.GetPublicKeyBytes())))
-				}
-
-				protoTx := proto.NewTx(w.Conf.TxVer, newTxis, newTxos, w.Conf.DefLckTm)
-				t := tx.Deserialize(protoTx)
-				w.LmnlTxs.Add(t)
-				w.SendTx <- t
-
-				// maybe add a debug message
-
+			} else {
+				fmt.Printf("ERROR {Wallet.HndlTxReq}: nil public key inputted")
 			}
 		} else {
 			fmt.Printf("ERROR {Wallet.HndlTxReq}: no amount requested")
