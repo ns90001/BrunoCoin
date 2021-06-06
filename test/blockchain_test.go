@@ -50,44 +50,43 @@ func TestGetUTXOForAmt(t *testing.T) {
 }
 
 func TestAdd(t *testing.T) {
-		genNd := NewGenNd()
-		genNd.Start()
-		genNd.StartMiner()
+	genNd := NewGenNd()
+	genNd.Start()
+	genNd.StartMiner()
 
-		testConf := blockchain.DefaultConfig()
+	testConf := blockchain.DefaultConfig()
 
-		bc := blockchain.New(testConf)
+	bc := blockchain.New(testConf)
 
-		testTxi := &txi.TransactionInput{
-			TransactionHash: "",
-			OutputIndex:     0,
-			UnlockingScript: "",
-			Amount:          0,
-		}
+	testTxi := &txi.TransactionInput{
+		TransactionHash: "",
+		OutputIndex:     0,
+		UnlockingScript: "",
+		Amount:          0,
+	}
 
-		testTxo := &txo.TransactionOutput{
-			Amount:        0,
-			LockingScript: "",
-			Liminal:       false,
-		}
+	testTxo := &txo.TransactionOutput{
+		Amount:        0,
+		LockingScript: "",
+		Liminal:       false,
+	}
 
-		t1 := &tx.Transaction{
-			Version:  0,
-			Inputs:   []*txi.TransactionInput{testTxi},
-			Outputs:  []*txo.TransactionOutput{testTxo},
-			LockTime: 0,
-		}
+	t1 := &tx.Transaction{
+		Version:  0,
+		Inputs:   []*txi.TransactionInput{testTxi},
+		Outputs:  []*txo.TransactionOutput{testTxo},
+		LockTime: 0,
+	}
 
-		transactions := []*tx.Transaction{t1}
+	transactions := []*tx.Transaction{t1}
 
-		byte1 := byte(0)
+	byte1 := byte(0)
 
-		testBlk := block.New(genNd.Chain.LastBlock.Hash(), transactions, hex.EncodeToString([]byte{byte1}))
+	testBlk := block.New(genNd.Chain.LastBlock.Hash(), transactions, hex.EncodeToString([]byte{byte1}))
 
-		bc.Add(testBlk)
+	bc.Add(testBlk)
 
-		if bc.LastBlock.Block != testBlk {
-			t.Errorf("ERROR {blockchain.Add}: Failed to add block")
-		}
-
+	if bc.LastBlock.Block != testBlk {
+		t.Errorf("ERROR {blockchain.Add}: Failed to add block")
+	}
 }
