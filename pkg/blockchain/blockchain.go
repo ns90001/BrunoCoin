@@ -350,25 +350,24 @@ func (bc *Blockchain) GetUTXOForAmt(amt uint32, pubKey string) ([]*UTXOInfo, uin
 
 	var lastBlock = bc.LastBlock
 
-	current := uint32(0)
+	var current uint32 = 0
 	var currentInfo = make([]*UTXOInfo, 0)
 
 	for key, element := range lastBlock.utxo {
 		hash, i := txo.PrsTXOLoc(key)
+		amount := element.Amount
 
-		matchingKey := element.LockingScript == pubKey
-		isLiminal := element.Liminal
-
-		if matchingKey && !isLiminal {
+		if element.LockingScript == pubKey && !element.Liminal {
 			if current >= amt {
 				break
 			} else {
-				current += element.Amount
-				out := UTXOInfo{hash, i, element, element.Amount}
+				current += amount
+				out := UTXOInfo{hash, i, element, amount}
 				currentInfo = append(currentInfo, &out)
 				element.Liminal = true
 			}
 		}
+
 	}
 
 	return currentInfo, current - amt, current >= amt

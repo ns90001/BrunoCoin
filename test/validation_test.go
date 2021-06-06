@@ -100,6 +100,7 @@ func TestChkTxNormalTx (t *testing.T) {
 		Transactions: []*tx.Transaction{&transaction},
 	})
 
+
 	isValid := genNd.ChkTx(&transaction)
 
 	if !isValid {
