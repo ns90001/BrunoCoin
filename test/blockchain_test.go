@@ -6,7 +6,6 @@ import (
 	"BrunoCoin/pkg/block/tx/txi"
 	"BrunoCoin/pkg/block/tx/txo"
 	"BrunoCoin/pkg/blockchain"
-	"BrunoCoin/pkg/miner"
 	"bytes"
 	"encoding/hex"
 	"io"
@@ -139,7 +138,7 @@ func TestAdd(t *testing.T) {
 	}
 }
 
-func TestBcAddNil(t testing.T) {
+func TestBcAddNil(t *testing.T) {
 	old := os.Stdout // keep backup of the real stdout
 	r, w, _ := os.Pipe()
 	os.Stdout = w

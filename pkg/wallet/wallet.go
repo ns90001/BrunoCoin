@@ -237,6 +237,5 @@ func (w *Wallet) HndlTxReq(txR *TxReq) {
 		fmt.Printf("ERROR {Wallet.HndlTxReq}: nil input")
 	}
 
-
 	return
 }

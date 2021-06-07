@@ -13,7 +13,6 @@ import (
  *
  */
 
-
 // ChkBlk (CheckBlock) validates a block based on multiple
 // conditions.
 // To be valid:
@@ -52,8 +51,9 @@ func (n *Node) ChkBlk(b *block.Block) bool {
 
 	if b != nil {
 
-		sizeLessThanMax := b.Sz() < n.Conf.MxBlkSz
+		sizeLessThanMax := b.Sz() <= n.Conf.MxBlkSz
 		firstIsCoinbase := false
+		outputsExist := false
 		txsChecked := true
 
 		satisfiesPOW := b.SatisfiesPOW(b.Hdr.DiffTarg)
@@ -64,14 +64,16 @@ func (n *Node) ChkBlk(b *block.Block) bool {
 			if t != nil {
 				if i == 0 {
 					firstIsCoinbase = t.IsCoinbase()
+					outputsExist = t.SumOutputs() > 0
+				} else {
+					txsChecked = txsChecked && n.ChkTx(t)
 				}
-				txsChecked = txsChecked && n.ChkTx(t)
 			} else {
 				fmt.Printf("ERROR {Node.ChkBlk}: nil transaction")
 				return false
 			}
 		}
-		return sizeLessThanMax && firstIsCoinbase && txsChecked && chkChains && satisfiesPOW
+		return sizeLessThanMax && firstIsCoinbase && outputsExist && txsChecked && chkChains && satisfiesPOW
 	} else {
 		fmt.Printf("ERROR {Miner.GenCBTx}: nil block")
 		return false
@@ -127,13 +129,14 @@ func (n *Node) ChkTx(t *tx.Transaction) bool {
 		inputsNonEmpty := len(t.Inputs) != 0
 		outputsNonEmpty := len(t.Outputs) != 0
 		outputsGreaterThanZero := t.SumOutputs() > 0
-		inputsLargerThanOutputs := t.SumInputs() > t.SumOutputs()
+		inputsLargerThanOutputs := t.SumInputs() >= t.SumOutputs()
 		smallerThanMaxSize := t.Sz() <= n.Conf.MxBlkSz
 
 		seenHashes := make([]string, 0)
 
 		isUnlockedAndValid := true
 		notDoubleSpent := true
+		validInputsAndOutputs := len(t.Inputs) > 0 && len(t.Outputs) > 0
 
 		for _, i := range t.Inputs {
 			if containsHash(i.Hash(), seenHashes) {
@@ -144,11 +147,17 @@ func (n *Node) ChkTx(t *tx.Transaction) bool {
 			if u != nil {
 				isUnlockedAndValid =
 					isUnlockedAndValid &&
-						n.Chain.IsInvalidInput(i) &&
+						!n.Chain.IsInvalidInput(i) &&
 						n.Chain.GetUTXO(i).IsUnlckd(i.UnlockingScript)
 			} else {
 				fmt.Printf("nil utxo")
 				isUnlockedAndValid = false
+			}
+		}
+
+		for _, i := range t.Outputs {
+			if i.Amount <= 0  {
+				validInputsAndOutputs = false
 			}
 		}
 
@@ -158,7 +167,8 @@ func (n *Node) ChkTx(t *tx.Transaction) bool {
 			inputsLargerThanOutputs &&
 			smallerThanMaxSize &&
 			isUnlockedAndValid &&
-			notDoubleSpent
+			notDoubleSpent &&
+			validInputsAndOutputs
 	} else {
 		fmt.Printf("ERROR {Node.ChkTx}: nil transaction")
 		return false
