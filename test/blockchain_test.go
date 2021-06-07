@@ -153,7 +153,7 @@ func TestBcAddNil(t *testing.T) {
 
 	bc.Add(nil)
 
-	errorMessage := "ERROR"
+	errorMessage := "ERROR {Blockchain.Add}: recevied nil input"
 
 	outC := make(chan string)
 	// copy the output in a separate goroutine so printing can't block indefinitely

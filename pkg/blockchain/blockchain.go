@@ -100,30 +100,35 @@ func (bc *Blockchain) Add(b *block.Block) {
 	bc.Lock()
 	defer bc.Unlock()
 
-	prevBlock := bc.blocks[b.Hdr.PrvBlkHsh]
-	prevBlockUtxo := prevBlock.utxo
+	if b != nil {
 
-	for _, t := range b.Transactions {
-		for _, txinput := range t.Inputs {
-			loc := txo.MkTXOLoc(txinput.TransactionHash, txinput.OutputIndex)
-			delete(prevBlockUtxo, loc)
+		prevBlock := bc.blocks[b.Hdr.PrvBlkHsh]
+		prevBlockUtxo := prevBlock.utxo
+
+		for _, t := range b.Transactions {
+			for _, txinput := range t.Inputs {
+				loc := txo.MkTXOLoc(txinput.TransactionHash, txinput.OutputIndex)
+				delete(prevBlockUtxo, loc)
+			}
+			for idx, txoutput := range t.Outputs {
+				loc := txo.MkTXOLoc(t.Hash(), uint32(idx))
+				prevBlockUtxo[loc] = txoutput
+			}
 		}
-		for idx, txoutput := range t.Outputs {
-			loc := txo.MkTXOLoc(t.Hash(), uint32(idx))
-			prevBlockUtxo[loc] = txoutput
+
+		newNode := BlockchainNode{b, prevBlock, prevBlockUtxo, prevBlock.depth + 1}
+
+		bc.blocks[b.Hash()] = &newNode
+
+		prevNode := bc.LastBlock
+		if newNode.depth >= prevNode.depth || (newNode.Hash() < prevNode.Hash() && prevNode.depth == newNode.depth) {
+			bc.LastBlock = &newNode
 		}
+
+		return
+	} else {
+		fmt.Printf("ERROR {Blockchain.Add}: recevied nil input")
 	}
-
-	newNode := BlockchainNode{b, prevBlock, prevBlockUtxo, prevBlock.depth+1}
-
-	bc.blocks[b.Hash()] = &newNode
-
-	prevNode := bc.LastBlock
-	if newNode.depth >= prevNode.depth || (newNode.Hash() < prevNode.Hash() && prevNode.depth == newNode.depth) {
-		bc.LastBlock = &newNode
-	}
-
-	return
 }
 
 // Length returns the count of blocks on the
