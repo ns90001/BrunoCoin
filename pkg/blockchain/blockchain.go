@@ -103,6 +103,11 @@ func (bc *Blockchain) Add(b *block.Block) {
 	prevBlock := bc.blocks[b.Hdr.PrvBlkHsh]
 	prevBlockUtxo := prevBlock.utxo
 
+	/*addUtxo := make(map[string]*txo.TransactionOutput)
+	for key, val := range prevBlockUtxo {
+		addUtxo[key] = val
+	}*/
+
 	for _, t := range b.Transactions {
 		for _, txinput := range t.Inputs {
 			loc := txo.MkTXOLoc(txinput.TransactionHash, txinput.OutputIndex)
@@ -120,7 +125,7 @@ func (bc *Blockchain) Add(b *block.Block) {
 
 	prevNode := bc.LastBlock
 	if newNode.depth >= prevNode.depth || (newNode.Hash() < prevNode.Hash() && prevNode.depth == newNode.depth) {
-		bc.LastBlock = &newNode
+		prevNode = &newNode
 	}
 
 	return
@@ -367,7 +372,6 @@ func (bc *Blockchain) GetUTXOForAmt(amt uint32, pubKey string) ([]*UTXOInfo, uin
 				element.Liminal = true
 			}
 		}
-
 	}
 
 	return currentInfo, current - amt, current >= amt

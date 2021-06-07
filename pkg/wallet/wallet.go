@@ -201,6 +201,10 @@ func (w *Wallet) HndlTxReq(txR *TxReq) {
 					var newTxis []*proto.TransactionInput
 					var newTxos []*proto.TransactionOutput
 
+					/*if w.Id == nil {
+						fmt.Printf("ERROR: w.Id is nil")
+					}*/
+
 					for _, utxo := range info {
 						sig, error := utxo.UTXO.MkSig(w.Id)
 						if error != nil {
@@ -211,6 +215,16 @@ func (w *Wallet) HndlTxReq(txR *TxReq) {
 					}
 
 					output := txR.Amt
+
+					/*if output <= 0 {
+						fmt.Printf("No output found!")
+					} else if w.Id.GetPublicKeyBytes() == nil || len(w.Id.GetPublicKeyBytes()) == 0 {
+						fmt.Printf("ERROR: Invalid public key")
+					} else if txR.PubK == nil || len(txR.PubK) == 0 {
+						fmt.Printf("ERROR: Invalid public key")
+					}*/
+
+
 					newTxos = append(newTxos, proto.NewTxOutpt(output, hex.EncodeToString(txR.PubK)))
 
 					//add change
