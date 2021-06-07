@@ -67,48 +67,6 @@ func TestChkTxEmptyIO (t *testing.T) {
 
 }
 
-func TestChkTxNormalTx (t *testing.T) {
-	genNd := NewGenNd()
-	genNd.Start()
-	genNd.StartMiner()
-
-	inputs := []*txi.TransactionInput{
-		{
-			TransactionHash: "123",
-			OutputIndex:     0,
-			UnlockingScript: "123",
-			Amount:          10,
-		}}
-
-	outputs := []*txo.TransactionOutput{
-		{
-			Amount:        1,
-			LockingScript: "123",
-			Liminal:       false,
-		},
-	}
-
-	transaction := tx.Transaction{
-		Version:  1,
-		Inputs: inputs,
-		Outputs:  outputs,
-		LockTime: 0,
-	}
-
-	genNd.Chain.Add(&block.Block{
-		Hdr:          block.Header{},
-		Transactions: []*tx.Transaction{&transaction},
-	})
-
-
-	isValid := genNd.ChkTx(&transaction)
-
-	if !isValid {
-		t.Errorf("function returned false, should return true")
-	}
-
-}
-
 func TestChkTxOutputOfZero (t *testing.T) {
 	genNd := NewGenNd()
 	genNd.Start()
