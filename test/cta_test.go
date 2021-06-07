@@ -117,6 +117,7 @@ func TestBasicSystem(t *testing.T) {
 	// Creates an invalid transaction of the malicious node
 	// trying to spend the money given to the genesis node
 	// in the genesis transaction.
+
 	tforinp := genNd.Chain.LastBlock.PrevNode.Block.Transactions[0]
 	unlck, _ := tforinp.Outputs[0].MkSig(genNd.Id)
 	txi := []*proto.TransactionInput{
